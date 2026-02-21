@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rythme Training - Rhythm Practice</title>
+
+    <!-- Load Roboto font for Material UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Load libraries in correct order -->
+    <!-- React and ReactDOM -->
+    <script src="lib/react.development.js"></script>
+    <script src="lib/react-dom.development.js"></script>
+
+    <!-- Emotion (required for Material UI) -->
+    <script src="lib/emotion-react.umd.min.js"></script>
+    <script src="lib/emotion-styled.umd.min.js"></script>
+
+    <!-- Material UI -->
+    <script src="lib/material-ui.development.js"></script>
+
+    <!-- Babel for JSX transformation -->
+    <script src="lib/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Service layer -->
+    <script type="text/babel" src="js/services/AudioService.js"></script>
+    <script type="text/babel" src="js/services/BeatService.js"></script>
+    <script type="text/babel" src="js/services/VisualizationService.js"></script>
+    <script type="text/babel" src="js/services/AccuracyService.js"></script>
+    <script type="text/babel" src="js/services/AnimationService.js"></script>
+    <script type="text/babel" src="js/services/AppStateService.js"></script>
+
+    <!-- DTOs -->
+    <script type="text/babel" src="js/dtos/PlaybackControlDTO.js"></script>
+    <script type="text/babel" src="js/dtos/BeatStateDTO.js"></script>
+    <script type="text/babel" src="js/dtos/AccuracyResultDTO.js"></script>
+
+    <!-- Components -->
+    <script type="text/babel" src="js/components/TempoInput.js"></script>
+    <script type="text/babel" src="js/components/ThresholdInput.js"></script>
+    <script type="text/babel" src="js/components/BeatSelector.js"></script>
+    <script type="text/babel" src="js/components/ControlHeader.js"></script>
+    <script type="text/babel" src="js/components/VisualizationPanel.js"></script>
+    <script type="text/babel" src="js/components/AccuracyFeedback.js"></script>
+
+    <!-- Application code with JSX -->
+    <script type="text/babel" src="js/app.js"></script>
+</body>
+</html>

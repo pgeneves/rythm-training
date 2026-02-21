@@ -1,0 +1,66 @@
+class AudioService {
+  constructor() {
+    this.audioContext = null;
+    this.analyser = null;
+    this.microphone = null;
+    this.dataArray = null;
+    this.stream = null;
+    this.initialized = false;
+  }
+
+  async initialize() {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 2048;
+      this.analyser.smoothingTimeConstant = 0.8;
+
+      this.microphone = this.audioContext.createMediaStreamSource(this.stream);
+      this.microphone.connect(this.analyser);
+
+      this.dataArray = new Float32Array(this.analyser.fftSize);
+      this.initialized = true;
+
+      return { success: true };
+    } catch (error) {
+      console.error('Microphone initialization failed:', error);
+      return {
+        success: false,
+        error: error.name === 'NotAllowedError'
+          ? 'Microphone permission denied. Please allow microphone access and reload.'
+          : 'Failed to initialize microphone: ' + error.message
+      };
+    }
+  }
+
+  getWaveformData() {
+    if (!this.initialized || !this.analyser) {
+      return new Float32Array(2048);
+    }
+
+    this.analyser.getFloatTimeDomainData(this.dataArray);
+    return this.dataArray;
+  }
+
+  stop() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+    }
+    if (this.audioContext) {
+      this.audioContext.close();
+    }
+    this.initialized = false;
+  }
+
+  isInitialized() {
+    return this.initialized;
+  }
+}
