@@ -4,18 +4,21 @@ const { Container, Box, Button, Typography, Paper, Alert } = MaterialUI;
 function App() {
   const [tempo, setTempo] = useState(60);
   const [soundLayers, setSoundLayers] = useState([
-    SoundLayerDTO.create({ label: 'Sound 1' }),
-    SoundLayerDTO.create({ label: 'Sound 2' }),
+    SoundLayerDTO.create({ label: "Sound 1" }),
+    SoundLayerDTO.create({ label: "Sound 2" }),
   ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [error, setError] = useState(null);
-  const [threshold, setThreshold] = useState(0.0001);
-  const [calibrationState, setCalibrationState] = useState({ isRecording: false, targetLayerId: null });
+  const [threshold, setThreshold] = useState(0.0021);
+  const [calibrationState, setCalibrationState] = useState({
+    isRecording: false,
+    targetLayerId: null,
+  });
   const [tickEnabled, setTickEnabled] = useState(true);
   const [tickFrequency, setTickFrequency] = useState(1000);
-  const [similarityThreshold, setSimilarityThreshold] = useState(0.65);
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
 
   const audioServiceRef = useRef(null);
   const beatServiceRef = useRef(null);
@@ -36,7 +39,9 @@ function App() {
     frequencyAnalysisServiceRef.current = new FrequencyAnalysisService();
     calibrationServiceRef.current = new CalibrationService(
       audioServiceRef.current,
-      frequencyAnalysisServiceRef.current
+      accuracyServiceRef.current,
+      frequencyAnalysisServiceRef.current,
+      threshold,
     );
     metronomeServiceRef.current = new MetronomeService();
 
@@ -49,19 +54,29 @@ function App() {
 
   // Refs so the animation loop always reads the latest values without re-subscribing
   const soundLayersRef = useRef(soundLayers);
-  useEffect(() => { soundLayersRef.current = soundLayers; }, [soundLayers]);
+  useEffect(() => {
+    soundLayersRef.current = soundLayers;
+  }, [soundLayers]);
 
   const tickEnabledRef = useRef(tickEnabled);
-  useEffect(() => { tickEnabledRef.current = tickEnabled; }, [tickEnabled]);
+  useEffect(() => {
+    tickEnabledRef.current = tickEnabled;
+  }, [tickEnabled]);
 
   const tickFrequencyRef = useRef(tickFrequency);
-  useEffect(() => { tickFrequencyRef.current = tickFrequency; }, [tickFrequency]);
+  useEffect(() => {
+    tickFrequencyRef.current = tickFrequency;
+  }, [tickFrequency]);
 
   const thresholdRef = useRef(threshold);
-  useEffect(() => { thresholdRef.current = threshold; }, [threshold]);
+  useEffect(() => {
+    thresholdRef.current = threshold;
+  }, [threshold]);
 
   const similarityThresholdRef = useRef(similarityThreshold);
-  useEffect(() => { similarityThresholdRef.current = similarityThreshold; }, [similarityThreshold]);
+  useEffect(() => {
+    similarityThresholdRef.current = similarityThreshold;
+  }, [similarityThreshold]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -72,18 +87,20 @@ function App() {
       onFrame: () => {
         const beat = beatServiceRef.current.getCurrentBeat();
         const waveformData = audioServiceRef.current.getWaveformData();
-        const transition = animationServiceRef.current.detectBeatTransition(beat);
+        const transition =
+          animationServiceRef.current.detectBeatTransition(beat);
 
         if (transition.occurred) {
           // Metronome tick at bar starts
           if (tickEnabledRef.current && [0, 4, 8, 12].includes(beat)) {
             metronomeServiceRef.current.tick(
               audioServiceRef.current.getAudioContext(),
-              tickFrequencyRef.current
+              tickFrequencyRef.current,
             );
           }
 
-          const level = accuracyServiceRef.current.calculateAudioLevel(waveformData);
+          const level =
+            accuracyServiceRef.current.calculateAudioLevel(waveformData);
           const soundDetected = level > thresholdRef.current;
 
           const freqData = soundDetected
@@ -94,33 +111,34 @@ function App() {
           if (soundDetected && freqData) {
             const audioCtx = audioServiceRef.current.getAudioContext();
             const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
-            const excludeRange = frequencyAnalysisServiceRef.current.getTickExclusionRange(
-              tickFrequencyRef.current,
-              sampleRate
-            );
+            const excludeRange =
+              frequencyAnalysisServiceRef.current.getTickExclusionRange(
+                tickFrequencyRef.current,
+                sampleRate,
+              );
             match = frequencyAnalysisServiceRef.current.classifySound(
               freqData,
               soundLayersRef.current,
               similarityThresholdRef.current,
-              excludeRange
+              excludeRange,
             );
           }
           const detectedLayerId = match ? match.layerId : null;
 
-          setSoundLayers(prev => {
+          setSoundLayers((prev) => {
             let updated = prev;
             for (const layer of prev) {
               const result = accuracyServiceRef.current.evaluateLayerAccuracy(
                 layer,
                 transition.previousBeat,
                 detectedLayerId,
-                soundDetected
+                soundDetected,
               );
               updated = appStateServiceRef.current.processLayerAccuracyUpdate(
                 updated,
                 layer.id,
                 transition.previousBeat,
-                result
+                result,
               );
             }
             return updated;
@@ -132,7 +150,7 @@ function App() {
         const currentLayers = soundLayersRef.current;
         const mergedBeats = currentLayers.reduce(
           (acc, layer) => acc.map((v, i) => v || layer.beats[i]),
-          Array(16).fill(false)
+          Array(16).fill(false),
         );
 
         if (visualizationServiceRef.current) {
@@ -160,11 +178,15 @@ function App() {
       setError(null);
       calibrationServiceRef.current = new CalibrationService(
         audioServiceRef.current,
-        frequencyAnalysisServiceRef.current
+        accuracyServiceRef.current,
+        frequencyAnalysisServiceRef.current,
+        threshold,
       );
     }
 
-    setSoundLayers(prev => appStateServiceRef.current.initializeLayersAccuracy(prev));
+    setSoundLayers((prev) =>
+      appStateServiceRef.current.initializeLayersAccuracy(prev),
+    );
     animationServiceRef.current.reset();
 
     setIsPlaying(true);
@@ -187,7 +209,7 @@ function App() {
   };
 
   const handleTickToggle = () => {
-    setTickEnabled(prev => !prev);
+    setTickEnabled((prev) => !prev);
   };
 
   const handleTickFrequencyChange = (newFreq) => {
@@ -199,36 +221,44 @@ function App() {
   };
 
   const handleBeatToggle = (layerId, beatIndex) => {
-    setSoundLayers(prev => prev.map(layer => {
-      if (layer.id !== layerId) return layer;
-      const newBeats = [...layer.beats];
-      newBeats[beatIndex] = !newBeats[beatIndex];
-      return { ...layer, beats: newBeats };
-    }));
+    setSoundLayers((prev) =>
+      prev.map((layer) => {
+        if (layer.id !== layerId) return layer;
+        const newBeats = [...layer.beats];
+        newBeats[beatIndex] = !newBeats[beatIndex];
+        return { ...layer, beats: newBeats };
+      }),
+    );
   };
 
   const handleAddLayer = () => {
     const count = soundLayers.length + 1;
-    setSoundLayers(prev => [...prev, SoundLayerDTO.create({ label: `Sound ${count}` })]);
+    setSoundLayers((prev) => [
+      ...prev,
+      SoundLayerDTO.create({ label: `Sound ${count}` }),
+    ]);
   };
 
   const handleRemoveLayer = (layerId) => {
-    setSoundLayers(prev => prev.filter(l => l.id !== layerId));
+    setSoundLayers((prev) => prev.filter((l) => l.id !== layerId));
   };
 
   const handleLabelChange = (layerId, newLabel) => {
-    setSoundLayers(prev => prev.map(l =>
-      l.id === layerId ? { ...l, label: newLabel } : l
-    ));
+    setSoundLayers((prev) =>
+      prev.map((l) => (l.id === layerId ? { ...l, label: newLabel } : l)),
+    );
   };
 
   const handleCalibrationToggle = async (layerId) => {
-    if (calibrationState.isRecording && calibrationState.targetLayerId === layerId) {
+    if (
+      calibrationState.isRecording &&
+      calibrationState.targetLayerId === layerId
+    ) {
       const profile = calibrationServiceRef.current.stopRecording();
       if (profile) {
-        setSoundLayers(prev => prev.map(l =>
-          l.id === layerId ? { ...l, profile } : l
-        ));
+        setSoundLayers((prev) =>
+          prev.map((l) => (l.id === layerId ? { ...l, profile } : l)),
+        );
       }
       setCalibrationState({ isRecording: false, targetLayerId: null });
     } else {
@@ -242,7 +272,9 @@ function App() {
         setError(null);
         calibrationServiceRef.current = new CalibrationService(
           audioServiceRef.current,
-          frequencyAnalysisServiceRef.current
+          accuracyServiceRef.current,
+          frequencyAnalysisServiceRef.current,
+          threshold,
         );
       }
       calibrationServiceRef.current.startRecording();
@@ -270,10 +302,10 @@ function App() {
         sx={{
           padding: 4,
           borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
         }}
       >
-        <Box sx={{ textAlign: 'center', marginBottom: 3 }}>
+        <Box sx={{ textAlign: "center", marginBottom: 3 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Rythme Training
           </Typography>
@@ -304,7 +336,7 @@ function App() {
           onSimilarityThresholdChange={handleSimilarityThresholdChange}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
           <Button
             variant="contained"
             color="primary"
@@ -333,7 +365,7 @@ function App() {
         <AccuracyFeedback beatState={beatState} />
 
         {isPlaying && (
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Box sx={{ mt: 2, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
               Current Beat: {currentBeat + 1} / 16 | Tempo: {tempo} BPM
             </Typography>
@@ -344,9 +376,15 @@ function App() {
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 
-console.log('React:', typeof React !== 'undefined' ? 'Loaded' : 'NOT LOADED');
-console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? 'Loaded' : 'NOT LOADED');
-console.log('MaterialUI:', typeof MaterialUI !== 'undefined' ? 'Loaded' : 'NOT LOADED');
+console.log("React:", typeof React !== "undefined" ? "Loaded" : "NOT LOADED");
+console.log(
+  "ReactDOM:",
+  typeof ReactDOM !== "undefined" ? "Loaded" : "NOT LOADED",
+);
+console.log(
+  "MaterialUI:",
+  typeof MaterialUI !== "undefined" ? "Loaded" : "NOT LOADED",
+);

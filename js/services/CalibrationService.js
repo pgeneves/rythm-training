@@ -1,7 +1,14 @@
 class CalibrationService {
-  constructor(audioService, frequencyAnalysisService) {
+  constructor(
+    audioService,
+    accuracyService,
+    frequencyAnalysisService,
+    thresholdLevel,
+  ) {
     this.audioService = audioService;
+    this.accuracyService = accuracyService;
     this.frequencyAnalysisService = frequencyAnalysisService;
+    this.thresholdLevel = thresholdLevel;
     this._isRecording = false;
     this._samples = [];
     this._intervalId = null;
@@ -14,13 +21,16 @@ class CalibrationService {
   startRecording() {
     this._isRecording = true;
     this._samples = [];
+    const self = this;
 
     this._intervalId = setInterval(() => {
-      //   const waveformData = this.audioService.getWaveformData();
-
-      const freqData = this.audioService.getFrequencyData();
-      if (freqData && freqData.length > 0) {
-        this._samples.push(new Float32Array(freqData));
+      const waveformData = self.audioService.getWaveformData();
+      const level = self.accuracyService.calculateAudioLevel(waveformData);
+      if (level > self.thresholdLevel) {
+        const freqData = self.audioService.getFrequencyData();
+        if (freqData && freqData.length > 0) {
+          this._samples.push(new Float32Array(freqData));
+        }
       }
     }, 50);
   }
