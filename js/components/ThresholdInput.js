@@ -29,7 +29,7 @@ const ThresholdInput = ({ threshold, onChange }) => {
       onChange={handleChange}
       onBlur={handleBlur}
       inputProps={{
-        min: 0.001,
+        min: 0.0001,
         max: 0.8,
         step: 0.001,
       }}

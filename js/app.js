@@ -2,17 +2,18 @@ const { useState, useEffect, useRef } = React;
 const { Container, Box, Button, Typography, Paper, Alert } = MaterialUI;
 
 function App() {
-  const [tempo, setTempo] = useState(120);
-  const [activeBeats, setActiveBeats] = useState(Array(16).fill(true));
+  const [tempo, setTempo] = useState(60);
+  const [activeBeats, setActiveBeats] = useState(Array(16).fill(false));
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [error, setError] = useState(null);
-  const [threshold, setThreshold] = useState(0.02);
+  const [threshold, setThreshold] = useState(0.0001);
   const [accuracyResults, setAccuracyResults] = useState(
-    Array(16).fill({ status: 'neutral', detected: false, level: 0 })
+    Array(16).fill({ status: "neutral", detected: false, level: 0 }),
   );
 
+  const maxSeenLevel = useRef(0);
   const audioServiceRef = useRef(null);
   const beatServiceRef = useRef(null);
   const visualizationServiceRef = useRef(null);
@@ -44,19 +45,31 @@ function App() {
         const beat = beatServiceRef.current.getCurrentBeat();
         const waveformData = audioServiceRef.current.getWaveformData();
 
-        const transition = animationServiceRef.current.detectBeatTransition(beat);
+        const transition =
+          animationServiceRef.current.detectBeatTransition(beat);
 
         if (transition.occurred) {
-          const level = accuracyServiceRef.current.calculateAudioLevel(waveformData);
+          const level =
+            accuracyServiceRef.current.calculateAudioLevel(waveformData);
+
+          if (level > maxSeenLevel.current) {
+            maxSeenLevel.current = level;
+            console.log("Max level => " + maxSeenLevel.current);
+          }
+
           const soundDetected = level > threshold;
           const result = accuracyServiceRef.current.evaluateAccuracy(
             activeBeats[transition.previousBeat],
             soundDetected,
-            level
+            level,
           );
 
-          setAccuracyResults(prev =>
-            appStateServiceRef.current.processAccuracyUpdate(prev, transition.previousBeat, result)
+          setAccuracyResults((prev) =>
+            appStateServiceRef.current.processAccuracyUpdate(
+              prev,
+              transition.previousBeat,
+              result,
+            ),
           );
         }
 
@@ -65,7 +78,7 @@ function App() {
         if (visualizationServiceRef.current) {
           visualizationServiceRef.current.draw(waveformData, activeBeats, beat);
         }
-      }
+      },
     };
 
     animationServiceRef.current.start(animationCallbacks);
@@ -97,6 +110,7 @@ function App() {
   const handleStop = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
+    maxSeenLevel.current = 0;
   };
 
   const handleTempoChange = (newTempo) => {
@@ -110,16 +124,28 @@ function App() {
     setThreshold(newThreshold);
   };
 
+  const handleMaxLevelChange = (newMaxLevel) => {
+    setMaxLevel(newMaxLevel);
+  };
+
   const handleBeatToggle = (beatIndex) => {
-    setActiveBeats(prev => {
+    setActiveBeats((prev) => {
       const newBeats = [...prev];
       newBeats[beatIndex] = !newBeats[beatIndex];
       return newBeats;
     });
   };
 
-  const playbackControl = PlaybackControlDTO.create({ tempo, threshold, activeBeats });
-  const beatState = BeatStateDTO.create({ currentBeat, activeBeats, accuracyResults });
+  const playbackControl = PlaybackControlDTO.create({
+    tempo,
+    threshold,
+    activeBeats,
+  });
+  const beatState = BeatStateDTO.create({
+    currentBeat,
+    activeBeats,
+    accuracyResults,
+  });
 
   return (
     <Container maxWidth="lg">
@@ -128,10 +154,10 @@ function App() {
         sx={{
           padding: 4,
           borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
         }}
       >
-        <Box sx={{ textAlign: 'center', marginBottom: 3 }}>
+        <Box sx={{ textAlign: "center", marginBottom: 3 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Rythme Training
           </Typography>
@@ -153,7 +179,7 @@ function App() {
           onBeatToggle={handleBeatToggle}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
           <Button
             variant="contained"
             color="primary"
@@ -182,7 +208,7 @@ function App() {
         <AccuracyFeedback beatState={beatState} />
 
         {isPlaying && (
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Box sx={{ mt: 2, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
               Current Beat: {currentBeat + 1} / 16 | Tempo: {tempo} BPM
             </Typography>
@@ -193,9 +219,15 @@ function App() {
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 
-console.log('React:', typeof React !== 'undefined' ? 'Loaded' : 'NOT LOADED');
-console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? 'Loaded' : 'NOT LOADED');
-console.log('MaterialUI:', typeof MaterialUI !== 'undefined' ? 'Loaded' : 'NOT LOADED');
+console.log("React:", typeof React !== "undefined" ? "Loaded" : "NOT LOADED");
+console.log(
+  "ReactDOM:",
+  typeof ReactDOM !== "undefined" ? "Loaded" : "NOT LOADED",
+);
+console.log(
+  "MaterialUI:",
+  typeof MaterialUI !== "undefined" ? "Loaded" : "NOT LOADED",
+);
