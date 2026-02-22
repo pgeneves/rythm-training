@@ -1,15 +1,21 @@
 class PlaybackControlDTO {
-  constructor(tempo, threshold, activeBeats) {
+  constructor(tempo, threshold, soundLayers, tickEnabled, tickFrequency, similarityThreshold) {
     this.tempo = tempo;
     this.threshold = threshold;
-    this.activeBeats = activeBeats;
+    this.soundLayers = soundLayers;
+    this.tickEnabled = tickEnabled;
+    this.tickFrequency = tickFrequency;
+    this.similarityThreshold = similarityThreshold;
   }
 
   static create(state) {
     return new PlaybackControlDTO(
       state.tempo,
       state.threshold,
-      state.activeBeats
+      state.soundLayers,
+      state.tickEnabled,
+      state.tickFrequency,
+      state.similarityThreshold
     );
   }
 }

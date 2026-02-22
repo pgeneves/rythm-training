@@ -1,15 +1,13 @@
 class BeatStateDTO {
-  constructor(currentBeat, activeBeats, accuracyResults) {
+  constructor(currentBeat, soundLayers) {
     this.currentBeat = currentBeat;
-    this.activeBeats = activeBeats;
-    this.accuracyResults = accuracyResults;
+    this.soundLayers = soundLayers;
   }
 
   static create(state) {
     return new BeatStateDTO(
       state.currentBeat,
-      state.activeBeats,
-      state.accuracyResults
+      state.soundLayers
     );
   }
 }

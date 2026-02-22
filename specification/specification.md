@@ -43,13 +43,34 @@ If however it is not matching the expected state, turn it red.
   - Feedback component at the bottom of the chart, same width
   - In the header add an input box to adjust the detection threshold
 
-## Goal 4: Improve code structure
+## Goal 4 (Done): Improve code structure
 
 The code is functional but the software architecture is not respecting proper isolation of functionliaties
 
 - To much business logic is present in the App.js. It should be kept miniam and all logic being distributed between components and services
 - Proper DTO should be put in place when applicable to communicate state between components and services
 - CSS file is underused and lot of styles are incorrectly expressed in the JS code
+
+## Goal 5 (Done): Multi-Layer Sound Detection + Metronome Tick
+
+The app moves from a single flat beat pattern to a multi-layer drum-machine model: each layer represents a distinct sound type (e.g. bass string, snare).
+Users can add or remove layers, name them freely, and set independent beat patterns per layer.
+
+Calibration: Before a layer can give accuracy feedback, the user must calibrate it by recording a few seconds of the target sound. The app captures a
+frequency fingerprint (FFT profile) and stores it on the layer. Layers without a profile show no feedback — they are neutral until calibrated.
+
+Detection: On each beat transition, the app classifies the detected sound by comparing its frequency content to all calibrated layer profiles using cosine
+similarity. A sound is attributed to the closest matching layer above a similarity threshold. Accuracy (correct/incorrect) is then evaluated per layer
+independently.
+
+Metronome: A short click sound fires at the start of each bar (every 4 beats). It is on by default and can be toggled.
+
+Key decisions:
+
+- Uncalibrated layers show "Calibrate to see feedback" rather than being hidden, so the user is always aware of all layers
+- The tick fires at beats 0, 4, 8, 12 specifically (bar-start, not every beat)
+- The similarity threshold is 0.65 — sounds that don't match any layer above this are treated as unclassified
+- The visualization canvas reflects the merged active beats across all layers (OR of all patterns)
 
 # Technical stack
 

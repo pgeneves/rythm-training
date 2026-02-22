@@ -50,6 +50,17 @@ class AudioService {
     return this.dataArray;
   }
 
+  getFrequencyData() {
+    if (!this.initialized || !this.analyser) return new Float32Array(1024);
+    const freqArray = new Float32Array(this.analyser.frequencyBinCount);
+    this.analyser.getFloatFrequencyData(freqArray);
+    return freqArray;
+  }
+
+  getAudioContext() {
+    return this.audioContext;
+  }
+
   stop() {
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());

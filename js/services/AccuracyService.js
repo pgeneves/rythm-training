@@ -52,4 +52,23 @@ class AccuracyService {
       level
     };
   }
+
+  /**
+   * Evaluate accuracy for a specific sound layer.
+   * Returns neutral if the layer is uncalibrated or the beat is inactive.
+   * @param {SoundLayerDTO} layer
+   * @param {number} beatIndex - the beat slot being evaluated (previousBeat)
+   * @param {string|null} detectedLayerId - id of the best-matched layer, or null
+   * @param {boolean} soundDetected - whether any sound crossed the threshold
+   * @returns {object} AccuracyResultDTO-compatible object
+   */
+  evaluateLayerAccuracy(layer, beatIndex, detectedLayerId, soundDetected) {
+    if (!layer.profile) return AccuracyResultDTO.neutral();
+    const beatWasActive = layer.beats[beatIndex];
+    if (!beatWasActive) return AccuracyResultDTO.neutral();
+    if (soundDetected && detectedLayerId === layer.id) {
+      return { status: 'correct', detected: true, level: 0 };
+    }
+    return { status: 'incorrect', detected: soundDetected, level: 0 };
+  }
 }

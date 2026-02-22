@@ -113,6 +113,31 @@ canvas {
 .mb-md { margin-bottom: var(--spacing-md); }
 .mb-lg { margin-bottom: var(--spacing-lg); }
 
+/* Sound layer rows */
+.sound-layer-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+}
+
+.calibrate-btn-recording {
+    animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+.layer-calibrated-chip {
+    background-color: var(--color-correct);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+}
+
 /* Responsive breakpoints */
 @media (max-width: 1024px) {
     #root {
