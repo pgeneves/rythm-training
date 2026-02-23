@@ -24,20 +24,6 @@ const InstrumentLayerRow = ({
     }
   };
 
-  const calibratedChip = layer.profile !== null && (
-    <MaterialUI.Chip
-      label="Calibrated"
-      size="small"
-      sx={{
-        backgroundColor: 'var(--color-correct)',
-        color: 'white',
-        fontSize: '0.7rem',
-        height: 20,
-        mt: 0.5,
-      }}
-    />
-  );
-
   return (
     <MaterialUI.Box
       sx={{
@@ -49,8 +35,8 @@ const InstrumentLayerRow = ({
         mb: 1,
       }}
     >
-      {/* Left: calibrate button + calibrated chip */}
-      <MaterialUI.Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 80 }}>
+      {/* Calibrate button */}
+      <MaterialUI.Box sx={{ minWidth: 80 }}>
         <MaterialUI.Button
           variant="contained"
           size="small"
@@ -67,11 +53,10 @@ const InstrumentLayerRow = ({
         >
           {isCalibrating ? 'Stop' : 'REC'}
         </MaterialUI.Button>
-        {calibratedChip}
       </MaterialUI.Box>
 
-      {/* Centre: editable label */}
-      <MaterialUI.Box sx={{ flex: 1 }}>
+      {/* Editable label */}
+      <MaterialUI.Box sx={{ flex: 1, minWidth: 100 }}>
         {editingLabel ? (
           <input
             autoFocus
@@ -86,7 +71,7 @@ const InstrumentLayerRow = ({
               borderRadius: 4,
               padding: '2px 6px',
               outline: 'none',
-              width: 160,
+              width: '100%',
             }}
           />
         ) : (
@@ -101,7 +86,10 @@ const InstrumentLayerRow = ({
         )}
       </MaterialUI.Box>
 
-      {/* Right: delete button */}
+      {/* Profile chart */}
+      <ProfileChart profile={layer.profile} isCalibrating={isCalibrating} />
+
+      {/* Delete button */}
       <MaterialUI.IconButton
         size="small"
         onClick={onRemove}

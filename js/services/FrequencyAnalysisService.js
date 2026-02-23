@@ -61,6 +61,14 @@ class FrequencyAnalysisService {
       profile[b] = sum[b] / samplesArray.length;
     }
 
+    // Sharpen: zero bins below the mean, double bins above the mean.
+    let mean = 0;
+    for (let b = 0; b < this.PROFILE_BINS; b++) mean += profile[b];
+    mean /= this.PROFILE_BINS;
+    for (let b = 0; b < this.PROFILE_BINS; b++) {
+      profile[b] = profile[b] >= mean ? profile[b] * 2 : 0;
+    }
+
     // L2 normalise to unit vector
     let norm = 0;
     for (let b = 0; b < this.PROFILE_BINS; b++) {
