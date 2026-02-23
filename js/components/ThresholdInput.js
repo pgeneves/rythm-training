@@ -11,7 +11,7 @@ const ThresholdInput = ({ threshold, onChange }) => {
 
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
-      const clampedValue = Math.max(0.001, Math.min(0.5, numValue));
+      const clampedValue = Math.max(0.0001, Math.min(0.5, numValue));
       onChange(clampedValue);
     }
   };

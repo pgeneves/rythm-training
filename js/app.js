@@ -1,5 +1,5 @@
 const { useState, useEffect, useRef } = React;
-const { Container, Box, Button, Typography, Paper, Alert } = MaterialUI;
+const { Container, Box, Typography, Paper, Alert, Tabs, Tab } = MaterialUI;
 
 function App() {
   const [tempo, setTempo] = useState(60);
@@ -19,6 +19,7 @@ function App() {
   const [tickEnabled, setTickEnabled] = useState(true);
   const [tickFrequency, setTickFrequency] = useState(1000);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
+  const [activeTab, setActiveTab] = useState(0);
 
   const audioServiceRef = useRef(null);
   const beatServiceRef = useRef(null);
@@ -282,14 +283,6 @@ function App() {
     }
   };
 
-  const playbackControl = PlaybackControlDTO.create({
-    tempo,
-    threshold,
-    soundLayers,
-    tickEnabled,
-    tickFrequency,
-    similarityThreshold,
-  });
   const beatState = BeatStateDTO.create({
     currentBeat,
     soundLayers,
@@ -320,56 +313,51 @@ function App() {
           </Alert>
         )}
 
-        <ControlHeader
-          playbackControl={playbackControl}
-          isPlaying={isPlaying}
-          calibrationState={calibrationState}
-          onTempoChange={handleTempoChange}
-          onThresholdChange={handleThresholdChange}
-          onBeatToggle={handleBeatToggle}
-          onCalibrationToggle={handleCalibrationToggle}
-          onAddLayer={handleAddLayer}
-          onRemoveLayer={handleRemoveLayer}
-          onLabelChange={handleLabelChange}
-          onTickToggle={handleTickToggle}
-          onTickFrequencyChange={handleTickFrequencyChange}
-          onSimilarityThresholdChange={handleSimilarityThresholdChange}
-        />
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 1 }}>
+          <Tab label="Instruments" />
+          <Tab label="Patterns" />
+          <Tab label="Exercise" />
+        </Tabs>
 
-        <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleStart}
-            disabled={isPlaying}
-            size="large"
-          >
-            Start
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleStop}
-            disabled={!isPlaying}
-            size="large"
-          >
-            Stop
-          </Button>
-        </Box>
+        {activeTab === 0 && (
+          <InstrumentsTab
+            soundLayers={soundLayers}
+            threshold={threshold}
+            similarityThreshold={similarityThreshold}
+            calibrationState={calibrationState}
+            isPlaying={isPlaying}
+            onThresholdChange={handleThresholdChange}
+            onSimilarityThresholdChange={handleSimilarityThresholdChange}
+            onCalibrationToggle={handleCalibrationToggle}
+            onAddLayer={handleAddLayer}
+            onRemoveLayer={handleRemoveLayer}
+            onLabelChange={handleLabelChange}
+          />
+        )}
 
-        <VisualizationPanel
-          visualizationServiceRef={visualizationServiceRef}
-          isPlaying={isPlaying}
-        />
+        {activeTab === 1 && (
+          <PatternsTab
+            soundLayers={soundLayers}
+            isPlaying={isPlaying}
+            onBeatToggle={handleBeatToggle}
+          />
+        )}
 
-        <AccuracyFeedback beatState={beatState} />
-
-        {isPlaying && (
-          <Box sx={{ mt: 2, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              Current Beat: {currentBeat + 1} / 16 | Tempo: {tempo} BPM
-            </Typography>
-          </Box>
+        {activeTab === 2 && (
+          <ExerciseTab
+            tempo={tempo}
+            isPlaying={isPlaying}
+            currentBeat={currentBeat}
+            tickEnabled={tickEnabled}
+            tickFrequency={tickFrequency}
+            beatState={beatState}
+            visualizationServiceRef={visualizationServiceRef}
+            onTempoChange={handleTempoChange}
+            onTickToggle={handleTickToggle}
+            onTickFrequencyChange={handleTickFrequencyChange}
+            onStart={handleStart}
+            onStop={handleStop}
+          />
         )}
       </Paper>
     </Container>

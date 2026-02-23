@@ -72,6 +72,16 @@ Key decisions:
 - The similarity threshold is 0.65 — sounds that don't match any layer above this are treated as unclassified
 - The visualization canvas reflects the merged active beats across all layers (OR of all patterns)
 
+## Goal 6: Re-structure the UI
+
+The UI should be split into 3 tabs with a clear purpose
+
+- The first one should allow to define one or several instrument and calibrate them. Level and match threshold should be defined on that panel
+- The second one would allow to define the beat pattern expected for each instrument.
+- The third one will allow to launch the exercise. Tempo and tick option as well as visulaization panel will be here.
+
+You'll adapt the code organization with respect to those 3 distinct part, plus the main part aside.
+
 # Technical stack
 
 The project should be implemented as a single page application, running exclusively on the browser without backend.
