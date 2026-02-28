@@ -21,6 +21,7 @@ class CalibrationService {
   startRecording() {
     this._isRecording = true;
     this._samples = [];
+    this._waveformSamples = [];
     const self = this;
 
     this._intervalId = setInterval(() => {
@@ -29,7 +30,8 @@ class CalibrationService {
       if (level > self.thresholdLevel) {
         const freqData = self.audioService.getFrequencyData();
         if (freqData && freqData.length > 0) {
-          this._samples.push(new Float32Array(freqData));
+          self._samples.push(new Float32Array(freqData));
+          self._waveformSamples.push(new Float32Array(waveformData));
         }
       }
     }, 50);
@@ -44,14 +46,40 @@ class CalibrationService {
 
     if (this._samples.length < 3) {
       this._samples = [];
+      this._waveformSamples = [];
       return null;
     }
 
-    const profile = this.frequencyAnalysisService.computeAverageProfile(
-      this._samples,
-    );
+    const profile = this.frequencyAnalysisService.computeAverageProfile(this._samples);
+
+    const sampleRate = this.audioService.getAudioContext()
+      ? this.audioService.getAudioContext().sampleRate
+      : 44100;
+
+    const meydaSnapshots = this._waveformSamples
+      .map(w => this.frequencyAnalysisService.extractMeydaFeatures(w, sampleRate))
+      .filter(Boolean);
+
+    let meydaFeatures = null;
+    if (meydaSnapshots.length > 0) {
+      const avg = new Float32Array(25);
+      for (const feat of meydaSnapshots) {
+        for (let i = 0; i < 25; i++) avg[i] += feat[i];
+      }
+      for (let i = 0; i < 25; i++) avg[i] /= meydaSnapshots.length;
+
+      let norm = 0;
+      for (let i = 0; i < 25; i++) norm += avg[i] * avg[i];
+      norm = Math.sqrt(norm);
+      if (norm > 0) {
+        for (let i = 0; i < 25; i++) avg[i] /= norm;
+      }
+      meydaFeatures = avg;
+    }
+
     this._samples = [];
-    return profile;
+    this._waveformSamples = [];
+    return { profile, meydaFeatures };
   }
 }
 

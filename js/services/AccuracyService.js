@@ -63,7 +63,7 @@ class AccuracyService {
    * @returns {object} AccuracyResultDTO-compatible object
    */
   evaluateLayerAccuracy(layer, beatIndex, detectedLayerId, soundDetected) {
-    if (!layer.profile) return AccuracyResultDTO.neutral();
+    if (!layer.profile && !layer.meydaFeatures && !layer.keyBinding) return AccuracyResultDTO.neutral();
     const beatWasActive = layer.beats[beatIndex];
     if (!beatWasActive) return AccuracyResultDTO.neutral();
     if (soundDetected && detectedLayerId === layer.id) {

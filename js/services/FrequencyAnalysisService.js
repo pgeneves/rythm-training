@@ -85,6 +85,43 @@ class FrequencyAnalysisService {
   }
 
   /**
+   * Extract MFCC(13) + Chroma(12) via Meyda, L2-normalised into Float32Array(25).
+   * Returns null if Meyda is unavailable or extraction fails.
+   * @param {Float32Array} waveformData - time domain samples (at least 512)
+   * @param {number} sampleRate
+   * @returns {Float32Array|null}
+   */
+  extractMeydaFeatures(waveformData, sampleRate) {
+    if (typeof Meyda === 'undefined' || !waveformData || waveformData.length < 512) return null;
+    try {
+      const slice = Array.from(waveformData.slice(0, 512));
+      Meyda.sampleRate = sampleRate || 44100;
+      Meyda.bufferSize = 512;
+      const features = Meyda.extract(['mfcc', 'chroma'], slice);
+      if (!features || !features.mfcc || !features.chroma) return null;
+
+      const combined = new Float32Array(25);
+      for (let i = 0; i < Math.min(13, features.mfcc.length); i++) {
+        combined[i] = features.mfcc[i] || 0;
+      }
+      for (let i = 0; i < Math.min(12, features.chroma.length); i++) {
+        combined[13 + i] = features.chroma[i] || 0;
+      }
+
+      let norm = 0;
+      for (let i = 0; i < 25; i++) norm += combined[i] * combined[i];
+      norm = Math.sqrt(norm);
+      if (norm > 0) {
+        for (let i = 0; i < 25; i++) combined[i] /= norm;
+      }
+      return combined;
+    } catch (e) {
+      console.warn('Meyda feature extraction failed:', e);
+      return null;
+    }
+  }
+
+  /**
    * Dot product of two unit vectors (cosine similarity when both are L2-normalised).
    * @param {Float32Array} a
    * @param {Float32Array} b
@@ -101,19 +138,33 @@ class FrequencyAnalysisService {
 
   /**
    * Downsample raw frequency data (with tick exclusion) and find the best matching layer.
+   * Layers with meydaFeatures are compared via Meyda cosine similarity;
+   * layers with only profile fall back to FFT cosine similarity.
    * @param {Float32Array} frequencyData - raw FFT dB data from analyser (1024 bins)
+   * @param {Float32Array|null} waveformData - time domain samples for Meyda features
    * @param {SoundLayerDTO[]} soundLayers
    * @param {number} similarityThreshold
    * @param {{ start: number, end: number } | null} excludeRange
+   * @param {number} sampleRate
    * @returns {{ layerId: string, similarity: number } | null}
    */
-  classifySound(frequencyData, soundLayers, similarityThreshold = 0.65, excludeRange = null) {
+  classifySound(frequencyData, waveformData, soundLayers, similarityThreshold = 0.65, excludeRange = null, sampleRate = 44100) {
     const inputProfile = this.computeAverageProfile([frequencyData], excludeRange);
+    const inputMeyda = waveformData ? this.extractMeydaFeatures(waveformData, sampleRate) : null;
 
     let best = null;
     for (const layer of soundLayers) {
-      if (!layer.profile) continue;
-      const sim = this.cosineSimilarity(inputProfile, layer.profile);
+      if (!layer.profile && !layer.meydaFeatures) continue;
+
+      let sim;
+      if (layer.meydaFeatures && inputMeyda) {
+        sim = this.cosineSimilarity(inputMeyda, layer.meydaFeatures);
+      } else if (layer.profile) {
+        sim = this.cosineSimilarity(inputProfile, layer.profile);
+      } else {
+        continue;
+      }
+
       if (sim >= similarityThreshold) {
         if (!best || sim > best.similarity) {
           best = { layerId: layer.id, similarity: sim };

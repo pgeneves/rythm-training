@@ -21,6 +21,8 @@ function App() {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
   const [activeTab, setActiveTab] = useState(0);
 
+  const manualHitsRef = useRef(new Set());
+
   const audioServiceRef = useRef(null);
   const beatServiceRef = useRef(null);
   const visualizationServiceRef = useRef(null);
@@ -79,6 +81,23 @@ function App() {
     similarityThresholdRef.current = similarityThreshold;
   }, [similarityThreshold]);
 
+  // Keyboard listener for manual mode — active only while playing
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const handleKeyDown = (e) => {
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+      for (const layer of soundLayersRef.current) {
+        if (layer.keyBinding && layer.keyBinding === e.key) {
+          manualHitsRef.current.add(layer.id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying]);
+
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -119,9 +138,11 @@ function App() {
               );
             match = frequencyAnalysisServiceRef.current.classifySound(
               freqData,
+              waveformData,
               soundLayersRef.current,
               similarityThresholdRef.current,
               excludeRange,
+              sampleRate,
             );
           }
           const detectedLayerId = match ? match.layerId : null;
@@ -129,11 +150,19 @@ function App() {
           setSoundLayers((prev) => {
             let updated = prev;
             for (const layer of prev) {
+              const keyHit = layer.keyBinding
+                ? manualHitsRef.current.has(layer.id)
+                : false;
+              const layerDetectedId = layer.keyBinding
+                ? (keyHit ? layer.id : null)
+                : detectedLayerId;
+              const layerSoundDetected = layer.keyBinding ? keyHit : soundDetected;
+
               const result = accuracyServiceRef.current.evaluateLayerAccuracy(
                 layer,
                 transition.previousBeat,
-                detectedLayerId,
-                soundDetected,
+                layerDetectedId,
+                layerSoundDetected,
               );
               updated = appStateServiceRef.current.processLayerAccuracyUpdate(
                 updated,
@@ -142,6 +171,7 @@ function App() {
                 result,
               );
             }
+            manualHitsRef.current.clear();
             return updated;
           });
         }
@@ -250,15 +280,22 @@ function App() {
     );
   };
 
+  const handleKeyBindingChange = (layerId, key) => {
+    setSoundLayers((prev) =>
+      prev.map((l) => (l.id === layerId ? { ...l, keyBinding: key } : l)),
+    );
+  };
+
   const handleCalibrationToggle = async (layerId) => {
     if (
       calibrationState.isRecording &&
       calibrationState.targetLayerId === layerId
     ) {
-      const profile = calibrationServiceRef.current.stopRecording();
-      if (profile) {
+      const calibResult = calibrationServiceRef.current.stopRecording();
+      if (calibResult) {
+        const { profile, meydaFeatures } = calibResult;
         setSoundLayers((prev) =>
-          prev.map((l) => (l.id === layerId ? { ...l, profile } : l)),
+          prev.map((l) => (l.id === layerId ? { ...l, profile, meydaFeatures } : l)),
         );
       }
       setCalibrationState({ isRecording: false, targetLayerId: null });
@@ -332,6 +369,7 @@ function App() {
             onAddLayer={handleAddLayer}
             onRemoveLayer={handleRemoveLayer}
             onLabelChange={handleLabelChange}
+            onKeyBindingChange={handleKeyBindingChange}
           />
         )}
 

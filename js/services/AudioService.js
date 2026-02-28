@@ -3,6 +3,7 @@ class AudioService {
     this.audioContext = null;
     this.analyser = null;
     this.microphone = null;
+    this.highPassFilter = null;
     this.dataArray = null;
     this.stream = null;
     this.initialized = false;
@@ -23,8 +24,13 @@ class AudioService {
       this.analyser.fftSize = 2048;
       this.analyser.smoothingTimeConstant = 0.8;
 
+      this.highPassFilter = this.audioContext.createBiquadFilter();
+      this.highPassFilter.type = 'highpass';
+      this.highPassFilter.frequency.value = 70;
+
       this.microphone = this.audioContext.createMediaStreamSource(this.stream);
-      this.microphone.connect(this.analyser);
+      this.microphone.connect(this.highPassFilter);
+      this.highPassFilter.connect(this.analyser);
 
       this.dataArray = new Float32Array(this.analyser.fftSize);
       this.initialized = true;

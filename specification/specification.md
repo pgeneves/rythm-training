@@ -72,7 +72,7 @@ Key decisions:
 - The similarity threshold is 0.65 — sounds that don't match any layer above this are treated as unclassified
 - The visualization canvas reflects the merged active beats across all layers (OR of all patterns)
 
-## Goal 6: Re-structure the UI
+## Goal 6 (Done): Re-structure the UI
 
 The UI should be split into 3 tabs with a clear purpose
 
@@ -81,6 +81,17 @@ The UI should be split into 3 tabs with a clear purpose
 - The third one will allow to launch the exercise. Tempo and tick option as well as visulaization panel will be here.
 
 You'll adapt the code organization with respect to those 3 distinct part, plus the main part aside.
+
+## Goal 7: Improve instrument calibration
+
+Instrument calibration and accuray evaluation have to be improved.
+Calibration panel should offer a visualisation of frequency diagram as a little vertical barchart, aside each instrument.
+Result of calibration should be displayed in that chart to help understand how different recorded instrument are.
+
+The use of Meyda.js library will be required for a better accuracy. MFCC, Chronogram and RMS should be used.
+All frequency below 70Hz should be filtered out to limit noise.
+
+Add a manual mode as well to detect rythm from an associated key to each instrument, that can be selected in the calibration screen. This will help as a fallback for noisy environments
 
 # Technical stack
 

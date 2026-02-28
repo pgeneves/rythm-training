@@ -1,10 +1,12 @@
 class SoundLayerDTO {
-  constructor(id, label, profile, beats, accuracyResults) {
+  constructor(id, label, profile, beats, accuracyResults, meydaFeatures, keyBinding) {
     this.id = id;
     this.label = label;
-    this.profile = profile; // Float32Array | null
-    this.beats = beats;     // boolean[16]
+    this.profile = profile;           // Float32Array | null
+    this.beats = beats;               // boolean[16]
     this.accuracyResults = accuracyResults; // AccuracyResultDTO[16]
+    this.meydaFeatures = meydaFeatures !== undefined ? meydaFeatures : null; // Float32Array(25) | null
+    this.keyBinding = keyBinding !== undefined ? keyBinding : null;           // string | null
   }
 
   static create({ label }) {
@@ -14,7 +16,9 @@ class SoundLayerDTO {
       label,
       null,
       Array(16).fill(false),
-      AccuracyResultDTO.createArray(16)
+      AccuracyResultDTO.createArray(16),
+      null,
+      null
     );
   }
 }

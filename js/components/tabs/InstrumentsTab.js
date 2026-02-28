@@ -10,6 +10,7 @@ const InstrumentsTab = ({
   onAddLayer,
   onRemoveLayer,
   onLabelChange,
+  onKeyBindingChange,
 }) => {
   return (
     <MaterialUI.Box sx={{ p: 2 }}>
@@ -31,6 +32,8 @@ const InstrumentsTab = ({
             onLabelChange={newLabel => onLabelChange(layer.id, newLabel)}
             onRemove={() => onRemoveLayer(layer.id)}
             isOnlyRow={soundLayers.length === 1}
+            keyBinding={layer.keyBinding}
+            onKeyBindingChange={key => onKeyBindingChange(layer.id, key)}
           />
         ))}
       </MaterialUI.Box>

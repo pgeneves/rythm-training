@@ -6,10 +6,31 @@ const InstrumentLayerRow = ({
   onLabelChange,
   onRemove,
   isOnlyRow,
+  keyBinding,
+  onKeyBindingChange,
 }) => {
-  const { useState: useLocalState } = React;
+  const { useState: useLocalState, useEffect: useLocalEffect } = React;
   const [editingLabel, setEditingLabel] = useLocalState(false);
   const [labelValue, setLabelValue] = useLocalState(layer.label);
+  const [isListening, setIsListening] = useLocalState(false);
+
+  useLocalEffect(() => {
+    if (!isListening) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsListening(false);
+        return;
+      }
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+      e.preventDefault();
+      onKeyBindingChange(e.key);
+      setIsListening(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isListening]);
 
   const handleLabelBlur = () => {
     setEditingLabel(false);
@@ -88,6 +109,37 @@ const InstrumentLayerRow = ({
 
       {/* Profile chart */}
       <ProfileChart profile={layer.profile} isCalibrating={isCalibrating} />
+
+      {/* Key binding chip */}
+      <MaterialUI.Box sx={{ minWidth: 90 }}>
+        {isListening ? (
+          <MaterialUI.Chip
+            label="Press a key…"
+            size="small"
+            color="warning"
+            variant="outlined"
+            onDelete={() => setIsListening(false)}
+            sx={{ fontSize: '0.7rem' }}
+          />
+        ) : keyBinding ? (
+          <MaterialUI.Chip
+            label={keyBinding}
+            size="small"
+            color="primary"
+            onDelete={() => onKeyBindingChange(null)}
+            sx={{ fontSize: '0.7rem' }}
+          />
+        ) : (
+          <MaterialUI.Chip
+            label="Bind key"
+            size="small"
+            variant="outlined"
+            onClick={() => setIsListening(true)}
+            disabled={isPlaying}
+            sx={{ fontSize: '0.7rem', cursor: 'pointer' }}
+          />
+        )}
+      </MaterialUI.Box>
 
       {/* Delete button */}
       <MaterialUI.IconButton
