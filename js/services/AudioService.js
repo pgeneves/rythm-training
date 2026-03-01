@@ -15,18 +15,20 @@ class AudioService {
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: false
-        }
+          autoGainControl: false,
+        },
       });
 
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 2048;
       this.analyser.smoothingTimeConstant = 0.8;
 
       this.highPassFilter = this.audioContext.createBiquadFilter();
-      this.highPassFilter.type = 'highpass';
-      this.highPassFilter.frequency.value = 70;
+      this.highPassFilter.type = "highpass";
+      this.highPassFilter.frequency.value = 120;
 
       this.microphone = this.audioContext.createMediaStreamSource(this.stream);
       this.microphone.connect(this.highPassFilter);
@@ -37,12 +39,13 @@ class AudioService {
 
       return { success: true };
     } catch (error) {
-      console.error('Microphone initialization failed:', error);
+      console.error("Microphone initialization failed:", error);
       return {
         success: false,
-        error: error.name === 'NotAllowedError'
-          ? 'Microphone permission denied. Please allow microphone access and reload.'
-          : 'Failed to initialize microphone: ' + error.message
+        error:
+          error.name === "NotAllowedError"
+            ? "Microphone permission denied. Please allow microphone access and reload."
+            : "Failed to initialize microphone: " + error.message,
       };
     }
   }
@@ -69,7 +72,7 @@ class AudioService {
 
   stop() {
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach((track) => track.stop());
     }
     if (this.audioContext) {
       this.audioContext.close();

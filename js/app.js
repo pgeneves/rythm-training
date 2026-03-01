@@ -20,6 +20,9 @@ function App() {
   const [tickFrequency, setTickFrequency] = useState(1000);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.85);
   const [activeTab, setActiveTab] = useState(0);
+  const [isTesting, setIsTesting] = useState(false);
+  const [liveFreqData, setLiveFreqData] = useState(null);
+  const [matchedLayerId, setMatchedLayerId] = useState(null);
 
   const manualHitsRef = useRef(new Set());
 
@@ -320,6 +323,82 @@ function App() {
     }
   };
 
+  const handleTestToggle = async () => {
+    if (isTesting) {
+      setIsTesting(false);
+      return;
+    }
+
+    if (!audioInitialized) {
+      const result = await audioServiceRef.current.initialize();
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      setAudioInitialized(true);
+      setError(null);
+      calibrationServiceRef.current = new CalibrationService(
+        audioServiceRef.current,
+        accuracyServiceRef.current,
+        frequencyAnalysisServiceRef.current,
+        threshold,
+      );
+    }
+
+    setLiveFreqData(null);
+    setMatchedLayerId(null);
+    setIsTesting(true);
+  };
+
+  // Stop test mode when exercise starts
+  useEffect(() => {
+    if (isPlaying && isTesting) {
+      setIsTesting(false);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!isTesting) {
+      setLiveFreqData(null);
+      setMatchedLayerId(null);
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      const freqData = audioServiceRef.current.getFrequencyData();
+      const waveformData = audioServiceRef.current.getWaveformData();
+      if (!freqData) return;
+
+      const level = accuracyServiceRef.current.calculateAudioLevel(waveformData);
+      if (level < thresholdRef.current) {
+        setLiveFreqData(null);
+        setMatchedLayerId(null);
+        return;
+      }
+
+      const profile = frequencyAnalysisServiceRef.current.computeAverageProfile([freqData]);
+      setLiveFreqData(profile);
+
+      const audioCtx = audioServiceRef.current.getAudioContext();
+      const sampleRate = audioCtx ? audioCtx.sampleRate : 44100;
+      const match = frequencyAnalysisServiceRef.current.classifySound(
+        freqData,
+        waveformData,
+        soundLayersRef.current,
+        similarityThresholdRef.current,
+        null,
+        sampleRate,
+      );
+      setMatchedLayerId(match ? match.layerId : null);
+    }, 50);
+
+    return () => {
+      clearInterval(intervalId);
+      setLiveFreqData(null);
+      setMatchedLayerId(null);
+    };
+  }, [isTesting]);
+
   const beatState = BeatStateDTO.create({
     currentBeat,
     soundLayers,
@@ -370,6 +449,10 @@ function App() {
             onRemoveLayer={handleRemoveLayer}
             onLabelChange={handleLabelChange}
             onKeyBindingChange={handleKeyBindingChange}
+            isTesting={isTesting}
+            liveFreqData={liveFreqData}
+            matchedLayerId={matchedLayerId}
+            onTestToggle={handleTestToggle}
           />
         )}
 

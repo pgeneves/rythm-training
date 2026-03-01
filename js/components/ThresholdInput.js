@@ -23,7 +23,7 @@ const ThresholdInput = ({ threshold, onChange }) => {
   return (
     <MaterialUI.TextField
       className="input-fixed-width"
-      label="Detection Threshold"
+      label="Min. Energy Level"
       type="number"
       value={localValue}
       onChange={handleChange}

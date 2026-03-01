@@ -1,10 +1,12 @@
-const ProfileChart = ({ profile, isCalibrating, width = 128, height = 48 }) => {
+const ProfileChart = ({ profile, isCalibrating, liveData, isMatched, emptyLabel = 'Not calibrated', width = 128, height = 48 }) => {
   const { useRef, useEffect } = React;
   const canvasRef = useRef(null);
 
+  const data = liveData != null ? liveData : profile;
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !profile || isCalibrating) return;
+    if (!canvas || !data || isCalibrating) return;
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = width * dpr;
@@ -17,17 +19,17 @@ const ProfileChart = ({ profile, isCalibrating, width = 128, height = 48 }) => {
     ctx.clearRect(0, 0, width, height);
 
     const barW = width / 128;
-    ctx.fillStyle = '#1976d2';
+    ctx.fillStyle = (isMatched && liveData != null) ? '#4caf50' : '#1976d2';
 
     let maxVal = 0;
-    for (let i = 0; i < 128; i++) if (profile[i] > maxVal) maxVal = profile[i];
+    for (let i = 0; i < 128; i++) if (data[i] > maxVal) maxVal = data[i];
 
     for (let i = 0; i < 128; i++) {
-      if (profile[i] === 0) continue;
-      const barH = Math.max(1, (profile[i] / maxVal) * height);
+      if (data[i] === 0) continue;
+      const barH = Math.max(1, (data[i] / maxVal) * height);
       ctx.fillRect(i * barW, height - barH, barW, barH);
     }
-  }, [profile, isCalibrating, width, height]);
+  }, [profile, liveData, isCalibrating, isMatched, width, height]);
 
   if (isCalibrating) {
     return (
@@ -50,7 +52,7 @@ const ProfileChart = ({ profile, isCalibrating, width = 128, height = 48 }) => {
     );
   }
 
-  if (!profile) {
+  if (!data) {
     return (
       <MaterialUI.Box
         sx={{
@@ -65,9 +67,11 @@ const ProfileChart = ({ profile, isCalibrating, width = 128, height = 48 }) => {
           flexShrink: 0,
         }}
       >
-        <MaterialUI.Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
-          Not calibrated
-        </MaterialUI.Typography>
+        {emptyLabel && (
+          <MaterialUI.Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+            {emptyLabel}
+          </MaterialUI.Typography>
+        )}
       </MaterialUI.Box>
     );
   }

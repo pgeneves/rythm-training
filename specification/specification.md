@@ -82,16 +82,22 @@ The UI should be split into 3 tabs with a clear purpose
 
 You'll adapt the code organization with respect to those 3 distinct part, plus the main part aside.
 
-## Goal 7: Improve instrument calibration
+## Goal 7 (Done): Improve instrument calibration
 
 Instrument calibration and accuray evaluation have to be improved.
 Calibration panel should offer a visualisation of frequency diagram as a little vertical barchart, aside each instrument.
 Result of calibration should be displayed in that chart to help understand how different recorded instrument are.
 
 The use of Meyda.js library will be required for a better accuracy. MFCC, Chronogram and RMS should be used.
-All frequency below 70Hz should be filtered out to limit noise.
+All frequency below 120Hz should be filtered out to limit noise.
 
 Add a manual mode as well to detect rythm from an associated key to each instrument, that can be selected in the calibration screen. This will help as a fallback for noisy environments
+
+## Goal 8: Add a visula feedback on the calibration screen about quality of calibration
+
+Add a test button on the calibration screen taht will work like the recording but to test if calibration was right.
+It should display in realtime a chart of frequencies identical to the mini-barchart of instrument frequencies.
+During the test, the same procedure that will be applied during the training session should be applied to recognized matching instrument. When an instrument is matched a little green indicator, its frequency chart should turn green during the matching time.
 
 # Technical stack
 
